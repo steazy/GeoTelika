@@ -19,7 +19,7 @@ if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET must be set in production');
 }
 
-//  ✅ Added CORS middleware before session:
+//  ✅ Added CORS middleware before session
 app.use(
   cors({
     origin: "https://geotelika.onrender.com", // ✅ your deployed frontend
@@ -27,6 +27,7 @@ app.use(
   })
 );
 
+app.set("trust proxy", 1); // ✅ required on Render/Heroku-like platforms
 
 app.use(
   session({
