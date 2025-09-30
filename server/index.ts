@@ -4,7 +4,6 @@ import ConnectPgSimple from "connect-pg-simple";
 import { neon } from "@neondatabase/serverless";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import cors from "cors";// ✅ added for CORS middleware
 
 const app = express();
 app.use(express.json());
@@ -19,6 +18,10 @@ if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET must be set in production');
 }
 
+import cors from "cors";// ✅ added for CORS middleware
+
+app.set("trust proxy", 1); // ✅ required on Render/Heroku-like platforms
+
 //  ✅ Added CORS middleware before session
 app.use(
   cors({
@@ -26,8 +29,6 @@ app.use(
     credentials: true,                        // ✅ allow cookies
   })
 );
-
-app.set("trust proxy", 1); // ✅ required on Render/Heroku-like platforms
 
 app.use(
   session({
@@ -43,8 +44,8 @@ app.use(
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',  // ✅ was "strict"
+      secure: process.env.NODE_ENV === "production",// ✅ was 'production'
+      sameSite: 'lax',  // ✅ was "strict" - 🔑 allow cookies on redirects and SPA requests
     },
   })
 );
