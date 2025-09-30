@@ -50,12 +50,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create session
         req.session.userId = user.id;
         req.session.username = user.username;
-
-        console.log("[auth-debug] Registered user session:", req.session);
-
-        res.on("finish", () => {
-          console.log("[auth-debug] Set-Cookie headers:", res.getHeaders()["set-cookie"]);
-        });
         
         res.status(201).json({ 
           message: "User registered successfully",
@@ -117,12 +111,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create session
         req.session.userId = user.id;
         req.session.username = user.username;
-
-        console.log("[auth-debug] Created session for user:", req.session);
-
-        res.on("finish", () => {
-          console.log("[auth-debug] Set-Cookie headers:", res.getHeaders()["set-cookie"]);
-        });
         
         res.json({ 
           message: "Login successful",
@@ -142,8 +130,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error destroying session:", err);
         return res.status(500).json({ error: "Failed to logout" });
       }
-
-      console.log("[auth-debug] Session destroyed. Clearing cookie.");
       
       res.clearCookie('connect.sid');
       res.json({ message: "Logout successful" });
@@ -152,8 +138,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // GET /api/auth/session - Check current session
   app.get("/api/auth/session", (req, res) => {
-    console.log("[auth-debug] Session check:", req.session);
-
     const user = getCurrentUser(req);
     if (user) {
       res.json({ 
@@ -175,6 +159,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Ticket management routes
+  
+  // GET /api/tickets - Get all tickets with optional filtering (Protected Route)
   app.get("/api/tickets", requireAuth, async (req, res) => {
     try {
       const { status, priority, search, limit, offset } = req.query;
@@ -195,6 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/tickets/:id - Get a specific ticket by ID (Protected Route)
   app.get("/api/tickets/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
@@ -211,6 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/tickets - Create a new ticket (Protected Route)
   app.post("/api/tickets", requireAuth, async (req, res) => {
     try {
       const validationResult = insertTicketSchema.safeParse(req.body);
@@ -231,6 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PUT /api/tickets/:id/status - Update ticket status (Protected Route)
   app.put("/api/tickets/:id/status", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
@@ -240,6 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Status is required" });
       }
       
+      // Validate status values
       const validStatuses = ["open", "in-progress", "resolved", "closed"];
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ 
@@ -261,11 +251,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PUT /api/tickets/:id - Update ticket details (Protected Route)
   app.put("/api/tickets/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const updates = req.body;
       
+      // Remove fields that shouldn't be updated directly
       delete updates.id;
       delete updates.createdAt;
       delete updates.updatedAt;
@@ -283,16 +275,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Contact form endpoint
   app.post("/api/contact", async (req, res) => {
     try {
       const { name, email, company, phone, serviceInterest, message } = req.body;
       
+      // Basic validation
       if (!name || !email || !company || !message) {
         return res.status(400).json({ 
           error: "Missing required fields: name, email, company, message" 
         });
       }
       
+      // TODO: Send email notification or save to database
       console.log("Contact form submission:", {
         name,
         email, 
@@ -313,6 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Demo request endpoint
   app.post("/api/demo-request", async (req, res) => {
     try {
       const validationResult = insertDemoRequestSchema.safeParse(req.body);
@@ -327,6 +323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const demoRequest = await storage.createDemoRequest(validationResult.data);
       
+      // Log submission (without sensitive data)
       console.log("Demo request submitted:", {
         id: demoRequest.id,
         company: validationResult.data.company,

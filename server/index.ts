@@ -18,18 +18,6 @@ if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET must be set in production');
 }
 
-import cors from "cors";// ✅ added for CORS middleware
-
-app.set("trust proxy", 1); // ✅ required on Render/Heroku-like platforms
-
-//  ✅ Added CORS middleware before session
-app.use(
-  cors({
-    origin: "https://geotelika.onrender.com", // ✅ your deployed frontend
-    credentials: true,                        // ✅ allow cookies
-  })
-);
-
 app.use(
   session({
     store: new PgSession({
@@ -44,8 +32,8 @@ app.use(
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // ✅ was 'production'
-      sameSite: process.env.NODE_ENV === "production" ? "lax" : "strict",  // ✅ was "strict" - 🔑 allow cookies on redirects and SPA requests
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
     },
   })
 );
@@ -77,11 +65,6 @@ app.use((req, res, next) => {
     }
   });
 
-  next();
-});
-
-app.use((req, _res, next) => {
-  console.log("[cookie-debug] Incoming cookies:", req.headers.cookie);
   next();
 });
 
