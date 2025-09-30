@@ -5,6 +5,8 @@ import { neon } from "@neondatabase/serverless";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+console.log("Connected to DB:", process.env.DATABASE_URL);
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
