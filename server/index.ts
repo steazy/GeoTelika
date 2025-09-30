@@ -4,6 +4,7 @@ import ConnectPgSimple from "connect-pg-simple";
 import { neon } from "@neondatabase/serverless";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import cors from "cors";// ✅ added for CORS middleware
 
 const app = express();
 app.use(express.json());
@@ -17,6 +18,15 @@ const sql = neon(process.env.DATABASE_URL!);
 if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET must be set in production');
 }
+
+//  ✅ Added CORS middleware before session:
+app.use(
+  cors({
+    origin: "https://geotelika.onrender.com", // ✅ your deployed frontend
+    credentials: true,                        // ✅ allow cookies
+  })
+);
+
 
 app.use(
   session({
@@ -33,7 +43,7 @@ app.use(
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',  // ✅ was "strict"
     },
   })
 );
